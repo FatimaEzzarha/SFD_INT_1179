@@ -1,0 +1,217 @@
+<mvc:View
+    controllerName="sfdintcr1179.controller.MainView"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:layout="sap.ui.layout.form"
+    displayBlock="true"
+>
+    <Page title="{i18n>title}">
+        <content>
+            <layout:SimpleForm
+                id="formHeader"
+                editable="true"
+                layout="ResponsiveGridLayout"
+                labelSpanXL="3"
+                labelSpanL="3"
+                labelSpanM="4"
+                labelSpanS="12"
+                adjustLabelSpan="false"
+                emptySpanXL="4"
+                emptySpanL="4"
+                emptySpanM="0"
+                emptySpanS="0"
+                columnsXL="2"
+                columnsL="2"
+                columnsM="2"
+                class="sapUiSmallMargin"
+            >
+                <Label text="{i18n>labelPointVente}" />
+                <Input
+                    id="inputPointVente"
+                    showValueHelp="true"
+                    valueHelpOnly="true"
+                    valueHelpRequest="onValueHelpPointVente"
+                />
+
+                <Label text="{i18n>labelDateVente}" />
+                <DatePicker
+                    id="inputDateVente"
+                    displayFormat="dd/MM/yyyy"
+                    change="onChampChange"
+                />
+
+                <Label text="{i18n>labelDevise}" />
+                <Input
+                    id="inputDevise"
+                    value="EUR"
+                    editable="false"
+                    liveChange="onChampChange"
+                />
+
+                <Label text="{i18n>labelNumTransaction}" />
+                <Input
+                    id="inputNumTransaction"
+                    value="Auto"
+                    editable="false"
+                    liveChange="onChampChange"
+                />
+
+                <Label text="{i18n>labelTypeTransaction}" />
+                <Input
+                    id="inputTypeTransaction"
+                    value="ZREC"
+                    editable="false"
+                    liveChange="onChampChange"
+                />
+
+                <Label text="{i18n>labelNumCaisse}" />
+                <Input
+                    id="inputNumCaisse"
+                    placeholder="ex: 999"
+                    liveChange="onChampChange"
+                />
+
+                <Label text="{i18n>labelRefTicket}" />
+                <Input
+                    id="inputRefTicket"
+                    placeholder="ex: n° ticket"
+                    liveChange="onChampChange"
+                />
+
+                <Label text="{i18n>labelUtilisateur}" />
+                <Input
+                    id="inputUtilisateur"
+                    value="{/utilisateur}"
+                    editable="false"
+                    liveChange="onChampChange"
+                />
+
+                <Label text="{i18n>labelDebut}" />
+                <Input
+                    id="inputDebut"
+                    value="{path: '/debutTraitement', type: 'sap.ui.model.type.DateTime', formatOptions: { pattern: 'dd/MM/yyyy HH:mm:ss' }}"
+                    editable="false"
+                    liveChange="onChampChange"
+                />
+
+                <Label text="{i18n>labelFin}" />
+                <Input
+                    id="inputFin"
+                    value="{path: '/finTraitement', type: 'sap.ui.model.type.DateTime', formatOptions: { pattern: 'dd/MM/yyyy HH:mm:ss' }}"
+                    editable="false"
+                />
+            </layout:SimpleForm>
+
+            <OverflowToolbar class="sapUiSmallMarginTop">
+                <ToolbarSpacer />
+                <Button
+                    icon="sap-icon://delete"
+                    tooltip="{i18n>tooltipSupprimer}"
+                    type="Transparent"
+                    press="onSupprimerLigne"
+                />
+                <Button
+                    icon="sap-icon://add"
+                    tooltip="{i18n>tooltipAjouter}"
+                    type="Transparent"
+                    press="onAjouterLigne"
+                />
+            </OverflowToolbar>
+
+            <Table
+                id="tableLignes"
+                items="{/lignes}"
+                mode="MultiSelect"
+                selectionChange="onSelectionChange"
+                class="sapUiSmallMarginTop"
+            >
+                <columns>
+                    <Column>
+                        <Text text="{i18n>colPoste}" />
+                    </Column>
+                    <Column>
+                        <Text text="{i18n>colCodeTransac}" />
+                    </Column>
+                    <Column>
+                        <Text text="{i18n>colLibelleTransac}" />
+                    </Column>
+                    <Column>
+                        <Text text="{i18n>colSigne}" />
+                    </Column>
+                    <Column>
+                        <Text text="{i18n>colMontant}" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem>
+                        <cells>
+                            <Text text="{posteId}" />
+                            <Input
+                                value="{path: 'codeTransac'}"
+                                showValueHelp="true"
+                                valueHelpOnly="true"
+                                valueHelpRequest=".onValueHelpCodeTransac"
+                                valueState="{codeTransacState}"
+                                valueStateText="{codeTransacStateText}"
+                            />
+
+                            <Text text="{libelleTransac}" />
+                            <Text text="{signe}" />
+                            <Input
+                                value="{montant}"
+                                type="Number"
+                                liveChange="onMontantChange"
+                                valueLiveUpdate="true"
+                                valueState="{montantState}"
+                                valueStateText="{montantStateText}"
+                            />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+
+            <HBox
+                justifyContent="End"
+                class="sapUiSmallMarginTop"
+            >
+                <Text
+                    text="{i18n>labelSolde}"
+                    class="sapUiSmallMarginEnd sapUiSmallMarginTop"
+                />
+                <Text
+                    text="{/solde}"
+                    class="sapUiSmallMarginTop"
+                />
+            </HBox>
+
+            <HBox
+                class="sapUiSmallMarginTop"
+                justifyContent="End"
+            >
+                <Button
+                    text="{i18n>btnValider}"
+                    type="Emphasized"
+                    class="sapUiTinyMarginEnd"
+                    enabled="{/isFormValid}"
+                    press="onValider"
+                />
+                <Button
+                    text="{i18n>btnExporter}"
+                    class="sapUiTinyMarginEnd"
+                    press="onExporter"
+                    enabled="{/isExportEnabled}"
+                />
+                <Button
+                    text="{i18n>btnNouveau}"
+                    class="sapUiTinyMarginEnd"
+                    press="onNouveau"
+                />
+                <Button
+                    text="{i18n>btnQuitter}"
+                    press="onQuitter"
+                />
+            </HBox>
+        </content>
+    </Page>
+</mvc:View>
