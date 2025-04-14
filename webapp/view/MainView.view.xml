@@ -52,9 +52,7 @@
                 <Label text="{i18n>labelNumTransaction}" />
                 <Input
                     id="inputNumTransaction"
-                    value="Auto"
-                    editable="false"
-                    liveChange="onChampChange"
+                    editable="false"                   
                 />
 
                 <Label text="{i18n>labelTypeTransaction}" />

@@ -184,12 +184,26 @@ sap.ui.define([
             this.mettreAJourValidation();
         },
 
+        // calculerSolde: function () {
+        //     const oModel = this.getView().getModel();
+        //     const total = oModel.getProperty("/lignes")
+        //         .reduce((acc, l) => acc + (parseFloat(l.montant) || 0), 0);
+        //     oModel.setProperty("/solde", total.toFixed(2));
+        // },
+
         calculerSolde: function () {
             const oModel = this.getView().getModel();
-            const total = oModel.getProperty("/lignes")
-                .reduce((acc, l) => acc + (parseFloat(l.montant) || 0), 0);
+            const aLignes = oModel.getProperty("/lignes");
+        
+            const total = aLignes.reduce((acc, l) => {
+                const montant = parseFloat(l.montant) || 0;
+                const signe = l.signe === "-" ? -1 : 1;
+                return acc + signe * montant;
+            }, 0);
+        
             oModel.setProperty("/solde", total.toFixed(2));
         },
+        
 
         onChampChange: function () {
             this.mettreAJourValidation();
@@ -203,7 +217,7 @@ sap.ui.define([
         
             // === Champs entête ===
             const champsForm = [
-                "inputPointVente", "inputDateVente", "inputNumTransaction", "inputTypeTransaction",
+                "inputPointVente", "inputDateVente", "inputTypeTransaction",
                 "inputNumCaisse", "inputDevise", "inputUtilisateur", "inputRefTicket", "inputDebut"
             ];
         
@@ -293,6 +307,7 @@ sap.ui.define([
                     if (oAction === MessageBox.Action.OK) {
                         if (that.validerChampsRequis(true)) { // ✅ validation stricte à la soumission
                             oModel.setProperty("/finTraitement", new Date());
+                            that.genererTransactionSequenceNumber();
                             oModel.setProperty("/isExportEnabled", true);
                             MessageToast.show("Transaction envoyée à CAR avec succès.");
                         }
@@ -300,6 +315,38 @@ sap.ui.define([
                 }
             });
         },
+
+        genererTransactionSequenceNumber: function () {
+            const oView = this.getView();
+            const oModel = oView.getModel();
+        
+            const pointVente = oView.byId("inputPointVente").getValue();
+            const caisse = oView.byId("inputNumCaisse").getValue();
+            const fin = oModel.getProperty("/finTraitement");
+        
+            if (!pointVente || !caisse || !fin) {
+                return;
+            }
+        
+            const last4Store = pointVente.slice(-4);
+            const workstation = caisse;
+            const year = fin.getFullYear().toString().slice(-2);
+            const dayOfMonth = fin.getDate().toString().padStart(2, '0');
+        
+            const pad = (n) => (n < 10 ? '0' + n : n);
+            const hh = pad(fin.getHours());
+            const mm = pad(fin.getMinutes());
+            const ss = pad(fin.getSeconds());
+            const time = `${hh}${mm}${ss}`;
+        
+            const sequence = `${last4Store}${workstation}${year}${dayOfMonth}${time}`;
+            
+            // 👉 Met à jour directement le champ input
+            oView.byId("inputNumTransaction").setValue(sequence);
+        
+            return sequence;
+        },
+        
         
 
         onNouveau: function () {
