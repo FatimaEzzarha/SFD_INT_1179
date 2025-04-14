@@ -234,13 +234,19 @@ sap.ui.define([
             });
         
         
-            // Numéro de caisse : max 10
+            // Numéro de caisse : compris entre 0 et 999
             const numCaisse = oView.byId("inputNumCaisse");
-            const caisseValue = numCaisse.getValue();
-            if (caisseValue.length > 10) {
+            const caisseValue = numCaisse.getValue().trim();
+            const regex = /^\d+$/; 
+            
+            const intValue = parseInt(caisseValue, 10);
+            
+            if (!regex.test(caisseValue) || intValue < 1 || intValue > 999) {
                 numCaisse.setValueState("Error");
-                numCaisse.setValueStateText("Le numéro de caisse ne doit pas dépasser 10 caractères.");
+                numCaisse.setValueStateText("Le numéro de caisse doit être un entier entre 1 et 999.");
                 isValid = false;
+            } else {
+                numCaisse.setValueState("None");
             }
         
             // Réf. ticket : max 20
@@ -329,7 +335,7 @@ sap.ui.define([
             }
         
             const last4Store = pointVente.slice(-4);
-            const workstation = caisse;
+            const workstation = String(caisse).padStart(3, '0');
             const year = fin.getFullYear().toString().slice(-2);
             const dayOfMonth = fin.getDate().toString().padStart(2, '0');
         
@@ -365,7 +371,7 @@ sap.ui.define([
                         oModel.setProperty("/isFormValid", false);
                         oModel.setProperty("/isExportEnabled", false);
 
-                        ["inputPointVente", "inputDateVente", "inputNumCaisse", "inputRefTicket"].forEach(id => {
+                        ["inputPointVente", "inputDateVente", "inputNumCaisse", "inputRefTicket" , "inputNumTransaction"].forEach(id => {
                             const oField = that.getView().byId(id);
                             if (oField?.setValue) {
                                 oField.setValue("");
@@ -435,7 +441,7 @@ sap.ui.define([
                 posteId: ligne.posteId,
                 codeTransac: ligne.codeTransac,
                 libelleTransac: ligne.libelleTransac,
-                montant: ligne.montant,
+                montant: (ligne.signe === "-" ? "-" : "") + (parseFloat(ligne.montant).toFixed(2) || "0.00"),
                 utilisateur: oData.utilisateur,
                 debutTraitement: formatDateTime(oData.debutTraitement),
                 finTraitement: formatDateTime(oData.finTraitement)
