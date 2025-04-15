@@ -52,15 +52,17 @@ sap.ui.define([
                         }
                     },
                     search: function (oEvent) {
+                        debugger;
                         const sValue = oEvent.getParameter("value");
                         const oFilter = new sap.ui.model.Filter("RETAILSTOREID", sap.ui.model.FilterOperator.Contains, sValue);
-                        this.getBinding("items").filter([oFilter]);
+                        oEvent.getSource().getBinding("items").filter([oFilter]);
                     },
                     liveChange: function (oEvent) {
                         const sValue = oEvent.getParameter("value");
                         const oFilter = new sap.ui.model.Filter("RETAILSTOREID", sap.ui.model.FilterOperator.Contains, sValue);
-                        this.getBinding("items").filter([oFilter]);
+                        oEvent.getSource().getBinding("items").filter([oFilter]);
                     }
+                    
                 });
         
                 this._oPointVenteDialog.setModel(oModel); // Bind le modèle OData
@@ -88,7 +90,7 @@ sap.ui.define([
                         path: "/FitypeCodeVHSet",
                         template: new sap.m.StandardListItem({
                             title: "{FITYPECODE}",
-                            description: "{FITYPEDESCRIPTION}"
+                            description: "{FITYTDESCRIPTION}"
                         })
                     },
                     confirm: (oEvt) => {
@@ -99,7 +101,7 @@ sap.ui.define([
                             // Met à jour uniquement l'input concerné
                             this._oInputActif.setValue(sCode);
         
-                            // Appel GET_ENTITY
+                            // Appel GET_ENTITY pour récupérer tous les champs
                             oODataModel.read(`/FitypeCodeVHSet('${sCode}')`, {
                                 success: (oData) => {
                                     const oLine = oModel.getProperty(this._sPathLigneActive);
@@ -118,23 +120,29 @@ sap.ui.define([
                             });
                         }
                     },
-                    search: function (oEvt) {
-                        const sValue = oEvt.getParameter("value");
-                        const oFilter = new sap.ui.model.Filter("FITYPECODE", sap.ui.model.FilterOperator.Contains, sValue);
-                        this.getBinding("items").filter([oFilter]);
+                    search: function (oEvent) {
+                       
+                        const sValue = oEvent.getParameter("value");
+                        const oFilter = new sap.ui.model.Filter("FITYTDESCRIPTION", sap.ui.model.FilterOperator.Contains, sValue);
+                        oEvent.getSource().getBinding("items").filter([oFilter]);
+                    },
+                    liveChange: function (oEvent) {
+                        const sValue = oEvent.getParameter("value");
+                        const oFilter = new sap.ui.model.Filter("FITYTDESCRIPTION", sap.ui.model.FilterOperator.Contains, sValue);
+                        oEvent.getSource().getBinding("items").filter([oFilter]);
                     }
+                    
+                    
+                    
                 });
         
-                this._oVHCodeTransac.setModel(oODataModel);
+                this._oVHCodeTransac.setModel(oODataModel); // Bind ODataModel
             }
         
             this._oVHCodeTransac.open();
         },
         
         
-        
-        
-
         onAjouterLigne: function () {
             const oModel = this.getView().getModel();
             const aLignes = oModel.getProperty("/lignes");
@@ -184,12 +192,6 @@ sap.ui.define([
             this.mettreAJourValidation();
         },
 
-        // calculerSolde: function () {
-        //     const oModel = this.getView().getModel();
-        //     const total = oModel.getProperty("/lignes")
-        //         .reduce((acc, l) => acc + (parseFloat(l.montant) || 0), 0);
-        //     oModel.setProperty("/solde", total.toFixed(2));
-        // },
 
         calculerSolde: function () {
             const oModel = this.getView().getModel();
@@ -337,7 +339,11 @@ sap.ui.define([
             const last4Store = pointVente.slice(-4);
             const workstation = String(caisse).padStart(3, '0');
             const year = fin.getFullYear().toString().slice(-2);
-            const dayOfMonth = fin.getDate().toString().padStart(2, '0');
+            const startOfYear = new Date(fin.getFullYear(), 0, 0);
+            const diff = fin - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const dayOfYear = Math.floor(diff / oneDay).toString().padStart(3, '0');
+            
         
             const pad = (n) => (n < 10 ? '0' + n : n);
             const hh = pad(fin.getHours());
@@ -345,7 +351,8 @@ sap.ui.define([
             const ss = pad(fin.getSeconds());
             const time = `${hh}${mm}${ss}`;
         
-            const sequence = `${last4Store}${workstation}${year}${dayOfMonth}${time}`;
+            const sequence = `${last4Store}${workstation}${year}${dayOfYear}${time}`;
+
             
             // 👉 Met à jour directement le champ input
             oView.byId("inputNumTransaction").setValue(sequence);
