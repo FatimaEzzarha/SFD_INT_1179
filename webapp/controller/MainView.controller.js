@@ -29,11 +29,13 @@ sap.ui.define([
             this.getView().setModel(oModel);
         },
 
+        // ******************************************************* Value Help *************************************************************************************
+
         onValueHelpPointVente: function () {
             const oView = this.getView();
-            const oModel = this.getOwnerComponent().getModel(); // OData model déjà configuré
-        
-            // Crée le SelectDialog uniquement une fois
+            const oModel = this.getOwnerComponent().getModel(); 
+
+            // SelectDialog 
             if (!this._oPointVenteDialog) {
                 this._oPointVenteDialog = new sap.m.SelectDialog({
                     title: "Sélectionner un point de vente",
@@ -62,27 +64,26 @@ sap.ui.define([
                         const oFilter = new sap.ui.model.Filter("RETAILSTOREID", sap.ui.model.FilterOperator.Contains, sValue);
                         oEvent.getSource().getBinding("items").filter([oFilter]);
                     }
-                    
+
                 });
-        
+
                 this._oPointVenteDialog.setModel(oModel); // Bind le modèle OData
             }
-        
+
             this._oPointVenteDialog.open();
         },
 
         onValueHelpCodeTransac: function (oEvent) {
             const oView = this.getView();
-            const oModel = oView.getModel(); // JSONModel
-            const oODataModel = this.getOwnerComponent().getModel(); // ODataModel
-        
+            const oModel = oView.getModel(); 
+            const oODataModel = this.getOwnerComponent().getModel();
+
             const oInput = oEvent.getSource();
-            const sPath = oInput.getBindingContext().getPath(); // ex: "/lignes/1"
-        
-            // 🔥 Sauvegarde des contextes actifs
+            const sPath = oInput.getBindingContext().getPath(); 
+
             this._sPathLigneActive = sPath;
             this._oInputActif = oInput;
-        
+
             if (!this._oVHCodeTransac) {
                 this._oVHCodeTransac = new sap.m.SelectDialog({
                     title: "Sélectionner un code transaction",
@@ -97,10 +98,10 @@ sap.ui.define([
                         const oSelected = oEvt.getParameter("selectedItem");
                         if (oSelected && this._sPathLigneActive && this._oInputActif) {
                             const sCode = oSelected.getTitle();
-        
+
                             // Met à jour uniquement l'input concerné
                             this._oInputActif.setValue(sCode);
-        
+
                             // Appel GET_ENTITY pour récupérer tous les champs
                             oODataModel.read(`/FitypeCodeVHSet('${sCode}')`, {
                                 success: (oData) => {
@@ -108,7 +109,7 @@ sap.ui.define([
                                     oLine.codeTransac = oData.FITYPECODE;
                                     oLine.libelleTransac = oData.FITYTDESCRIPTION;
                                     oLine.signe = oData.DEBITFLAG === "X" ? "-" : "+";
-        
+
                                     oModel.setProperty(this._sPathLigneActive, oLine);
                                     this._sPathLigneActive = null;
                                     this._oInputActif = null;
@@ -121,7 +122,7 @@ sap.ui.define([
                         }
                     },
                     search: function (oEvent) {
-                       
+
                         const sValue = oEvent.getParameter("value");
                         const oFilter = new sap.ui.model.Filter("FITYTDESCRIPTION", sap.ui.model.FilterOperator.Contains, sValue);
                         oEvent.getSource().getBinding("items").filter([oFilter]);
@@ -131,18 +132,17 @@ sap.ui.define([
                         const oFilter = new sap.ui.model.Filter("FITYTDESCRIPTION", sap.ui.model.FilterOperator.Contains, sValue);
                         oEvent.getSource().getBinding("items").filter([oFilter]);
                     }
-                    
-                    
-                    
                 });
-        
+
                 this._oVHCodeTransac.setModel(oODataModel); // Bind ODataModel
             }
-        
+
             this._oVHCodeTransac.open();
         },
-        
-        
+
+
+        // ************************************************************ Table des données  poste ********************************************************************
+
         onAjouterLigne: function () {
             const oModel = this.getView().getModel();
             const aLignes = oModel.getProperty("/lignes");
@@ -157,7 +157,7 @@ sap.ui.define([
                 montantState: "None",
                 montantStateText: ""
             });
-            
+
             oModel.setProperty("/lignes", aLignes);
             this.mettreAJourValidation();
         },
@@ -187,6 +187,8 @@ sap.ui.define([
             this.mettreAJourValidation();
         },
 
+        // *****************************************************      Solde           **********************************************************************************************
+
         onMontantChange: function () {
             this.calculerSolde();
             this.mettreAJourValidation();
@@ -196,33 +198,32 @@ sap.ui.define([
         calculerSolde: function () {
             const oModel = this.getView().getModel();
             const aLignes = oModel.getProperty("/lignes");
-        
+
             const total = aLignes.reduce((acc, l) => {
                 const montant = parseFloat(l.montant) || 0;
                 const signe = l.signe === "-" ? -1 : 1;
                 return acc + signe * montant;
             }, 0);
-        
+
             oModel.setProperty("/solde", total.toFixed(2));
         },
-        
+
+
+        //*****************************************************    Bouton  Valider      ******************************************************************************************** 
 
         onChampChange: function () {
             this.mettreAJourValidation();
         },
 
-
         validerChampsRequis: function (isFromSubmit = false) {
             const oView = this.getView();
             const oModel = oView.getModel();
             let isValid = true;
-        
-            // === Champs entête ===
             const champsForm = [
                 "inputPointVente", "inputDateVente", "inputTypeTransaction",
                 "inputNumCaisse", "inputDevise", "inputUtilisateur", "inputRefTicket", "inputDebut"
             ];
-        
+
             champsForm.forEach(id => {
                 const oField = oView.byId(id);
                 const value = oField.getValue?.() || oField.getDateValue?.();
@@ -234,15 +235,15 @@ sap.ui.define([
                     oField.setValueState("None");
                 }
             });
-        
-        
+
+
             // Numéro de caisse : compris entre 0 et 999
             const numCaisse = oView.byId("inputNumCaisse");
             const caisseValue = numCaisse.getValue().trim();
-            const regex = /^\d+$/; 
-            
+            const regex = /^\d+$/;
+
             const intValue = parseInt(caisseValue, 10);
-            
+
             if (!regex.test(caisseValue) || intValue < 1 || intValue > 999) {
                 numCaisse.setValueState("Error");
                 numCaisse.setValueStateText("Le numéro de caisse doit être un entier entre 1 et 999.");
@@ -250,7 +251,7 @@ sap.ui.define([
             } else {
                 numCaisse.setValueState("None");
             }
-        
+
             // Réf. ticket : max 20
             const refTicket = oView.byId("inputRefTicket");
             const refValue = refTicket.getValue();
@@ -259,10 +260,10 @@ sap.ui.define([
                 refTicket.setValueStateText("La référence ticket ne doit pas dépasser 20 caractères.");
                 isValid = false;
             }
-        
+
             // === Vérification des lignes ===
             const aLignes = oModel.getProperty("/lignes") || [];
-        
+
             if (aLignes.length === 0) {
                 if (isFromSubmit) {
                     MessageToast.show("Veuillez ajouter au moins une ligne de transaction.");
@@ -270,8 +271,8 @@ sap.ui.define([
                 isValid = false;
             } else {
                 aLignes.forEach((l, idx) => {
-                    
-                   // Montant : décimal avec 2 décimales max
+
+                    // Montant : décimal avec 2 décimales max
                     if (!/^\d{1,15}(\.\d{1,2})?$/.test(l.montant)) {
                         l.montantState = "Error";
                         l.montantStateText = "Le montant doit être un nombre avec jusqu'à 2 décimales.";
@@ -283,7 +284,7 @@ sap.ui.define([
                 });
                 oModel.setProperty("/lignes", aLignes); // mise à jour
             }
-        
+
             // === Vérification du solde ===
             const solde = parseFloat(oModel.getProperty("/solde"));
             if (isNaN(solde) || solde !== 0) {
@@ -292,23 +293,23 @@ sap.ui.define([
                 }
                 isValid = false;
             }
-        
+
             return isValid;
         },
-        
-        
-        
+
+
+
 
         mettreAJourValidation: function () {
             const isValid = this.validerChampsRequis(false); // 👉 on précise bien false ici
             this.getView().getModel().setProperty("/isFormValid", isValid);
         },
-        
+
 
         onValider: function () {
             const oModel = this.getView().getModel();
             const that = this;
-        
+
             MessageBox.confirm("Souhaitez-vous valider et envoyer cette transaction à CAR ?", {
                 title: "Confirmation de validation",
                 onClose: function (oAction) {
@@ -316,26 +317,121 @@ sap.ui.define([
                         if (that.validerChampsRequis(true)) { // ✅ validation stricte à la soumission
                             oModel.setProperty("/finTraitement", new Date());
                             that.genererTransactionSequenceNumber();
-                            oModel.setProperty("/isExportEnabled", true);
-                            MessageToast.show("Transaction envoyée à CAR avec succès.");
+                            that.onEnvoyerVersBackend();
+                            
                         }
                     }
                 }
             });
         },
 
+        onEnvoyerVersBackend: function () {
+            debugger;
+            const oView = this.getView();
+            const oModel = oView.getModel();
+            const oODataModel = this.getOwnerComponent().getModel();
+
+            // Champs header
+            const retailstoreid = oView.byId("inputPointVente").getValue();
+            const oDate = oView.byId("inputDateVente").getDateValue();
+            const businessdaydate = oDate
+                ? `${oDate.getFullYear()}${(oDate.getMonth() + 1).toString().padStart(2, '0')}${oDate.getDate().toString().padStart(2, '0')}`
+                : "";
+            const transnumber = oView.byId("inputNumTransaction").getValue();
+            const transtypecode = oView.byId("inputTypeTransaction").getValue();
+            const workstationid = oView.byId("inputNumCaisse").getValue();
+            const transcurrency = oView.byId("inputDevise").getValue();
+            const processuser = oView.byId("inputUtilisateur").getValue();
+            const oDebut = oModel.getProperty("/debutTraitement");
+            const begintimestamp = oDebut
+                ? `${oDebut.getFullYear()}${(oDebut.getMonth() + 1).toString().padStart(2, '0')}${oDebut.getDate().toString().padStart(2, '0')}${oDebut.getHours().toString().padStart(2, '0')}${oDebut.getMinutes().toString().padStart(2, '0')}${oDebut.getSeconds().toString().padStart(2, '0')}`
+                : "";
+
+            const oFin = oModel.getProperty("/finTraitement");
+            const endtimestamp = oFin
+                ? `${oFin.getFullYear()}${(oFin.getMonth() + 1).toString().padStart(2, '0')}${oFin.getDate().toString().padStart(2, '0')}${oFin.getHours().toString().padStart(2, '0')}${oFin.getMinutes().toString().padStart(2, '0')}${oFin.getSeconds().toString().padStart(2, '0')}`
+                : "";
+
+
+
+            const origtransnumber = oView.byId("inputRefTicket").getValue();
+
+            // Lignes
+            const lignes = oModel.getProperty("/lignes") || [];
+
+            const hdrtoitemnav = lignes.map((ligne) => ({
+                RETAILSTOREID: retailstoreid,
+                POSTEID: ligne.posteId,
+                FINANCIALTYPECODE: ligne.codeTransac,
+                SIGN: ligne.signe,
+                AMOUNT: ligne.montant
+            }));
+
+            const payload = {
+                RETAILSTOREID: retailstoreid,
+                BUSINESSDAYDATE: businessdaydate,
+                TRANSNUMBER: transnumber,
+                TRANSTYPECODE: transtypecode,
+                WORKSTATIONID: workstationid,
+                TRANSCURRENCY: transcurrency,
+                PROCESSUSER: processuser,
+                BEGINTIMESTAMP: begintimestamp,
+                ENDTIMESTAMP: endtimestamp,
+                ORIGTRANSNUMBER: origtransnumber,
+                HDRTOITEMNAV: hdrtoitemnav,
+                ToMessages: []
+            };
+
+            oODataModel.create("/IdocHeaderSet", payload, {
+                success: function (oData) {
+                    if (oData && oData.ToMessages && oData.ToMessages.results) {
+                        var aMessages = oData.ToMessages.results;
+                        var errorMessage = "";
+                        var successMessage = "";
+                        var hasError = false;
+            
+                        aMessages.forEach(function (oMessage) {
+                            if (oMessage.type === 'E') {
+                                errorMessage += oMessage.message + "\n";
+                                hasError = true;
+                            } else {
+                                successMessage += oMessage.message ;
+                            }
+                        });
+            
+                        if (hasError) {
+                            MessageBox.error(errorMessage || "Erreur inconnue lors de l'envoi.");
+                        } else {
+                            MessageBox.success(successMessage );
+                            oModel.setProperty("/isFormValid", false);
+                            oModel.setProperty("/isExportEnabled", true);
+
+                        }
+                    } else {
+                        MessageToast.show("Formulaire envoyé, mais aucun message de retour.");
+                    }
+                },
+                error: function () {
+                    MessageBox.error("Erreur lors de l’envoi du formulaire.");
+                }
+            });
+            
+
+            console.log(payload);
+        },
+
         genererTransactionSequenceNumber: function () {
             const oView = this.getView();
             const oModel = oView.getModel();
-        
+
             const pointVente = oView.byId("inputPointVente").getValue();
             const caisse = oView.byId("inputNumCaisse").getValue();
             const fin = oModel.getProperty("/finTraitement");
-        
+
             if (!pointVente || !caisse || !fin) {
                 return;
             }
-        
+
             const last4Store = pointVente.slice(-4);
             const workstation = String(caisse).padStart(3, '0');
             const year = fin.getFullYear().toString().slice(-2);
@@ -343,25 +439,25 @@ sap.ui.define([
             const diff = fin - startOfYear;
             const oneDay = 1000 * 60 * 60 * 24;
             const dayOfYear = Math.floor(diff / oneDay).toString().padStart(3, '0');
-            
-        
+
+
             const pad = (n) => (n < 10 ? '0' + n : n);
             const hh = pad(fin.getHours());
             const mm = pad(fin.getMinutes());
             const ss = pad(fin.getSeconds());
             const time = `${hh}${mm}${ss}`;
-        
+
             const sequence = `${last4Store}${workstation}${year}${dayOfYear}${time}`;
 
-            
+
             // 👉 Met à jour directement le champ input
             oView.byId("inputNumTransaction").setValue(sequence);
-        
+
             return sequence;
         },
-        
-        
 
+ 
+    //  ********************************************       Bouton   Nouveau         **********************************************************************  
         onNouveau: function () {
             const that = this;
 
@@ -378,7 +474,7 @@ sap.ui.define([
                         oModel.setProperty("/isFormValid", false);
                         oModel.setProperty("/isExportEnabled", false);
 
-                        ["inputPointVente", "inputDateVente", "inputNumCaisse", "inputRefTicket" , "inputNumTransaction"].forEach(id => {
+                        ["inputPointVente", "inputDateVente", "inputNumCaisse", "inputRefTicket", "inputNumTransaction"].forEach(id => {
                             const oField = that.getView().byId(id);
                             if (oField?.setValue) {
                                 oField.setValue("");
@@ -392,6 +488,8 @@ sap.ui.define([
             });
         },
 
+        
+    //  ********************************************       Bouton  Quitter        **********************************************************************  
         onQuitter: function () {
             MessageBox.confirm("Souhaitez-vous quitter le formulaire ?", {
                 title: "Confirmation de sortie",
@@ -403,6 +501,9 @@ sap.ui.define([
                 }
             });
         },
+
+        
+    //  ********************************************       Bouton   Exporter        **********************************************************************  
 
         onExporter: function () {
             const that = this;
