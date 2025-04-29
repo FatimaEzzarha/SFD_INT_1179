@@ -31,14 +31,14 @@
                     id="inputPointVente"
                     showValueHelp="true"
                     valueHelpOnly="true"
-                    valueHelpRequest="onValueHelpPointVente"
+                    valueHelpRequest="onValueHelpRetailStore"
                 />
 
                 <Label text="{i18n>labelDateVente}" />
                 <DatePicker
                     id="inputDateVente"
                     displayFormat="dd/MM/yyyy"
-                    change="onChampChange"
+                    change="onFieldChange"
                 />
 
                 <Label text="{i18n>labelDevise}" />
@@ -46,7 +46,7 @@
                     id="inputDevise"
                     value="EUR"
                     editable="false"
-                    liveChange="onChampChange"
+                    liveChange="onFieldChange"
                 />
 
                 <Label text="{i18n>labelNumTransaction}" />
@@ -60,21 +60,21 @@
                     id="inputTypeTransaction"
                     value="ZREC"
                     editable="false"
-                    liveChange="onChampChange"
+                    liveChange="onFieldChange"
                 />
 
                 <Label text="{i18n>labelNumCaisse}" />
                 <Input
                     id="inputNumCaisse"
                     placeholder="ex: 999"
-                    liveChange="onChampChange"
+                    liveChange="onFieldChange"
                 />
 
                 <Label text="{i18n>labelRefTicket}" />
                 <Input
                     id="inputRefTicket"
                     placeholder="ex: n° ticket"
-                    liveChange="onChampChange"
+                    liveChange="onFieldChange"
                 />
 
                 <Label text="{i18n>labelUtilisateur}" />
@@ -82,7 +82,7 @@
                     id="inputUtilisateur"
                     value="{/utilisateur}"
                     editable="false"
-                    liveChange="onChampChange"
+                    liveChange="onFieldChange"
                 />
 
                 <Label text="{i18n>labelDebut}" />
@@ -90,7 +90,7 @@
                     id="inputDebut"
                     value="{path: '/debutTraitement', type: 'sap.ui.model.type.DateTime', formatOptions: { pattern: 'dd/MM/yyyy HH:mm:ss' }}"
                     editable="false"
-                    liveChange="onChampChange"
+                    liveChange="onFieldChange"
                 />
 
                 <Label text="{i18n>labelFin}" />
@@ -107,13 +107,13 @@
                     icon="sap-icon://delete"
                     tooltip="{i18n>tooltipSupprimer}"
                     type="Transparent"
-                    press="onSupprimerLigne"
+                    press="onRemoveSelectedLines"
                 />
                 <Button
                     icon="sap-icon://add"
                     tooltip="{i18n>tooltipAjouter}"
                     type="Transparent"
-                    press="onAjouterLigne"
+                    press="onAddLine"
                 />
             </OverflowToolbar>
 
@@ -149,7 +149,7 @@
                                 value="{path: 'codeTransac'}"
                                 showValueHelp="true"
                                 valueHelpOnly="true"
-                                valueHelpRequest=".onValueHelpCodeTransac"
+                                valueHelpRequest=".onValueHelpTransactionCode"
                                 valueState="{codeTransacState}"
                                 valueStateText="{codeTransacStateText}"
                             />
@@ -159,7 +159,7 @@
                             <Input
                                 value="{montant}"
                                 type="Number"
-                                liveChange="onMontantChange"
+                                liveChange="onAmountChanged"
                                 valueLiveUpdate="true"
                                 valueState="{montantState}"
                                 valueStateText="{montantStateText}"
@@ -192,22 +192,22 @@
                     type="Emphasized"
                     class="sapUiTinyMarginEnd"
                     enabled="{/isFormValid}"
-                    press="onValider"
+                    press="onSubmit"
                 />
                 <Button
                     text="{i18n>btnExporter}"
                     class="sapUiTinyMarginEnd"
-                    press="onExporter"
+                    press="onExportToExcel"
                     enabled="{/isExportEnabled}"
                 />
                 <Button
                     text="{i18n>btnNouveau}"
                     class="sapUiTinyMarginEnd"
-                    press="onNouveau"
+                    press="onResetForm"
                 />
                 <Button
                     text="{i18n>btnQuitter}"
-                    press="onQuitter"
+                    press="onExit"
                 />
             </HBox>
         </content>

@@ -31,7 +31,7 @@ sap.ui.define([
 
         // ******************************************************* Value Help *************************************************************************************
 
-        onValueHelpPointVente: function () {
+        onValueHelpRetailStore: function () {
             const oView = this.getView();
             const oModel = this.getOwnerComponent().getModel(); 
 
@@ -50,7 +50,7 @@ sap.ui.define([
                         if (oSelected) {
                             const sSelected = oSelected.getTitle();
                             oView.byId("inputPointVente").setValue(sSelected);
-                            this.mettreAJourValidation();
+                            this.updateValidationState();
                         }
                     },
                     search: function (oEvent) {
@@ -67,13 +67,13 @@ sap.ui.define([
 
                 });
 
-                this._oPointVenteDialog.setModel(oModel); // Bind le modèle OData
+                this._oPointVenteDialog.setModel(oModel); 
             }
 
             this._oPointVenteDialog.open();
         },
 
-        onValueHelpCodeTransac: function (oEvent) {
+        onValueHelpTransactionCode: function (oEvent) {
             const oView = this.getView();
             const oModel = oView.getModel(); 
             const oODataModel = this.getOwnerComponent().getModel();
@@ -98,11 +98,7 @@ sap.ui.define([
                         const oSelected = oEvt.getParameter("selectedItem");
                         if (oSelected && this._sPathLigneActive && this._oInputActif) {
                             const sCode = oSelected.getTitle();
-
-                            // Met à jour uniquement l'input concerné
                             this._oInputActif.setValue(sCode);
-
-                            // Appel GET_ENTITY pour récupérer tous les champs
                             oODataModel.read(`/FitypeCodeVHSet('${sCode}')`, {
                                 success: (oData) => {
                                     const oLine = oModel.getProperty(this._sPathLigneActive);
@@ -113,7 +109,7 @@ sap.ui.define([
                                     oModel.setProperty(this._sPathLigneActive, oLine);
                                     this._sPathLigneActive = null;
                                     this._oInputActif = null;
-                                    this.mettreAJourValidation();
+                                    this.updateValidationState();
                                 },
                                 error: () => {
                                     MessageToast.show("Erreur lors de la récupération du code transaction.");
@@ -134,7 +130,7 @@ sap.ui.define([
                     }
                 });
 
-                this._oVHCodeTransac.setModel(oODataModel); // Bind ODataModel
+                this._oVHCodeTransac.setModel(oODataModel); 
             }
 
             this._oVHCodeTransac.open();
@@ -143,7 +139,7 @@ sap.ui.define([
 
         // ************************************************************ Table des données  poste ********************************************************************
 
-        onAjouterLigne: function () {
+        onAddLine: function () {
             const oModel = this.getView().getModel();
             const aLignes = oModel.getProperty("/lignes");
             aLignes.push({
@@ -159,7 +155,7 @@ sap.ui.define([
             });
 
             oModel.setProperty("/lignes", aLignes);
-            this.mettreAJourValidation();
+            this.updateValidationState();
         },
 
         onSelectionChange: function (oEvent) {
@@ -168,7 +164,7 @@ sap.ui.define([
             this.getView().getModel().setProperty("/selectedIndices", aIndices);
         },
 
-        onSupprimerLigne: function () {
+        onRemoveSelectedLines: function () {
             const oModel = this.getView().getModel();
             let aLignes = oModel.getProperty("/lignes");
             const aSelectedIndices = oModel.getProperty("/selectedIndices") || [];
@@ -183,19 +179,19 @@ sap.ui.define([
 
             oModel.setProperty("/lignes", aLignes);
             oModel.setProperty("/selectedIndices", []);
-            this.calculerSolde();
-            this.mettreAJourValidation();
+            this.calculateBalance();
+            this.updateValidationState();
         },
 
-        // *****************************************************      Solde           **********************************************************************************************
+        // *****************************************************     Balance          **********************************************************************************************
 
-        onMontantChange: function () {
-            this.calculerSolde();
-            this.mettreAJourValidation();
+        onAmountChanged: function () {
+            this.calculateBalance();
+            this.updateValidationState();
         },
 
 
-        calculerSolde: function () {
+        calculateBalance: function () {
             const oModel = this.getView().getModel();
             const aLignes = oModel.getProperty("/lignes");
 
@@ -209,13 +205,13 @@ sap.ui.define([
         },
 
 
-        //*****************************************************    Bouton  Valider      ******************************************************************************************** 
+        //*****************************************************    Submit Button     ******************************************************************************************** 
 
-        onChampChange: function () {
-            this.mettreAJourValidation();
+        onFieldChange: function () {
+            this.updateValidationState();
         },
 
-        validerChampsRequis: function (isFromSubmit = false) {
+        validateRequiredFields: function (isFromSubmit = false) {
             const oView = this.getView();
             const oModel = oView.getModel();
             let isValid = true;
@@ -237,7 +233,7 @@ sap.ui.define([
             });
 
 
-            // Numéro de caisse : compris entre 0 et 999
+            // NumCaisse : between 1 and 999
             const numCaisse = oView.byId("inputNumCaisse");
             const caisseValue = numCaisse.getValue().trim();
             const regex = /^\d+$/;
@@ -261,7 +257,7 @@ sap.ui.define([
                 isValid = false;
             }
 
-            // === Vérification des lignes ===
+            // === Line item validation ===
             const aLignes = oModel.getProperty("/lignes") || [];
 
             if (aLignes.length === 0) {
@@ -285,7 +281,7 @@ sap.ui.define([
                 oModel.setProperty("/lignes", aLignes); // mise à jour
             }
 
-            // === Vérification du solde ===
+            // === Balance validation ===
             const solde = parseFloat(oModel.getProperty("/solde"));
             if (isNaN(solde) || solde !== 0) {
                 if (isFromSubmit) {
@@ -300,13 +296,13 @@ sap.ui.define([
 
 
 
-        mettreAJourValidation: function () {
-            const isValid = this.validerChampsRequis(false); // 👉 on précise bien false ici
+        updateValidationState: function () {
+            const isValid = this.validateRequiredFields(false); 
             this.getView().getModel().setProperty("/isFormValid", isValid);
         },
 
 
-        onValider: function () {
+        onSubmit: function () {
             const oModel = this.getView().getModel();
             const that = this;
 
@@ -314,10 +310,10 @@ sap.ui.define([
                 title: "Confirmation de validation",
                 onClose: function (oAction) {
                     if (oAction === MessageBox.Action.OK) {
-                        if (that.validerChampsRequis(true)) { // ✅ validation stricte à la soumission
+                        if (that.validateRequiredFields(true)) { 
                             oModel.setProperty("/finTraitement", new Date());
-                            that.genererTransactionSequenceNumber();
-                            that.onEnvoyerVersBackend();
+                            that.generateTransactionNumber();
+                            that.onSendToBackend();
                             
                         }
                     }
@@ -325,7 +321,7 @@ sap.ui.define([
             });
         },
 
-        onEnvoyerVersBackend: function () {
+        onSendToBackend: function () {
             debugger;
             const oView = this.getView();
             const oModel = oView.getModel();
@@ -355,8 +351,6 @@ sap.ui.define([
 
 
             const origtransnumber = oView.byId("inputRefTicket").getValue();
-
-            // Lignes
             const lignes = oModel.getProperty("/lignes") || [];
 
             const hdrtoitemnav = lignes.map((ligne) => ({
@@ -420,7 +414,7 @@ sap.ui.define([
             console.log(payload);
         },
 
-        genererTransactionSequenceNumber: function () {
+        generateTransactionNumber: function () {
             const oView = this.getView();
             const oModel = oView.getModel();
 
@@ -448,17 +442,14 @@ sap.ui.define([
             const time = `${hh}${mm}${ss}`;
 
             const sequence = `${last4Store}${workstation}${year}${dayOfYear}${time}`;
-
-
-            // 👉 Met à jour directement le champ input
             oView.byId("inputNumTransaction").setValue(sequence);
 
             return sequence;
         },
 
  
-    //  ********************************************       Bouton   Nouveau         **********************************************************************  
-        onNouveau: function () {
+    //  ********************************************       Reset Button        **********************************************************************  
+        onResetForm: function () {
             const that = this;
 
             MessageBox.confirm("Souhaitez-vous réinitialiser le formulaire ?", {
@@ -489,8 +480,8 @@ sap.ui.define([
         },
 
         
-    //  ********************************************       Bouton  Quitter        **********************************************************************  
-        onQuitter: function () {
+    //  ********************************************       Exit Button        **********************************************************************  
+    onExit: function () {
             MessageBox.confirm("Souhaitez-vous quitter le formulaire ?", {
                 title: "Confirmation de sortie",
                 onClose: function (oAction) {
@@ -503,21 +494,21 @@ sap.ui.define([
         },
 
         
-    //  ********************************************       Bouton   Exporter        **********************************************************************  
+    //  ********************************************      Export Button        **********************************************************************  
 
-        onExporter: function () {
+         onExportToExcel: function () {
             const that = this;
             MessageBox.confirm("Souhaitez-vous exporter les données au format Excel ?", {
                 title: "Confirmation d’export",
                 onClose: function (oAction) {
                     if (oAction === MessageBox.Action.OK) {
-                        that._exporterExcel();
+                        that._buildExcelFile();
                     }
                 }
             });
         },
 
-        _exporterExcel: function () {
+        _buildExcelFile: function () {
             const oView = this.getView();
             const oModel = oView.getModel();
             const oData = oModel.getData();
