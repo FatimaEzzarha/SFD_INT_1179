@@ -500,7 +500,7 @@ sap.ui.define([
 
         
     //  ********************************************       Exit Button        **********************************************************************  
-    onExit: function () {
+    onExitApp: function () {
             MessageBox.confirm("Souhaitez-vous quitter le formulaire ?", {
                 title: "Confirmation de sortie",
                 onClose: function (oAction) {
