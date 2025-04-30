@@ -13,12 +13,14 @@ builder:
     - name: deploy-to-abap
       afterTask: generateCachebusterInfo
       configuration:
+        log: 5
         target:
           destination: DCA
           url: http://vhehbdcaci.sap.bhv.app:44300
           client: '110'
         app:
-          name: ZRECLASSEMENT
+          name: ZPOSDT_TEND_REC
+          description: Reclassement des moyens de paiement
           package: zposdt
           transport: DCAK900085
         exclude:

@@ -15,15 +15,34 @@ sap.ui.define([
                 selectedIndices: [],
                 isFormValid: false,
                 isExportEnabled: false,
-                utilisateur: "",
+                user: "",
                 debutTraitement: new Date(),
                 finTraitement: null
             });
 
-            if (sap.ushell && sap.ushell.Container) {
-                const sUserId = sap.ushell.Container.getUser().getId();
-                oModel.setProperty("/utilisateur", sUserId);
-            }
+
+
+            // if (sap.ushell && sap.ushell.Container) {
+            //     const sUserId = sap.ushell.Container.getUser().getId();
+            //     oModel.setProperty("/user", sUserId);
+            // }
+
+            sap.ui.require(["sap/ushell/Container"], function () {
+                sap.ushell.Container
+                    .getServiceAsync("UserInfo")
+                    .then(function (oUserInfo) {
+                        // ► API ≥ UI5 1.75 :
+                        oModel.setProperty("/user", oUserInfo.getId())
+                        // ► Par sécurité pour les versions plus anciennes :
+                        // console.log("User ID :", oUserInfo.getUser().getId());
+                    })
+                    .catch(function (err) {
+                        //console.error("UserInfo service KO :", err);
+                    });
+            });
+
+
+
 
             oModel.setDefaultBindingMode(sap.ui.model.BindingMode.TwoWay);
             this.getView().setModel(oModel);
@@ -217,7 +236,7 @@ sap.ui.define([
             let isValid = true;
             const champsForm = [
                 "inputPointVente", "inputDateVente", "inputTypeTransaction",
-                "inputNumCaisse", "inputDevise", "inputUtilisateur", "inputRefTicket", "inputDebut"
+                "inputNumCaisse", "inputDevise", "inputUser", "inputRefTicket", "inputDebut"
             ];
 
             champsForm.forEach(id => {
@@ -337,7 +356,7 @@ sap.ui.define([
             const transtypecode = oView.byId("inputTypeTransaction").getValue();
             const workstationid = oView.byId("inputNumCaisse").getValue();
             const transcurrency = oView.byId("inputDevise").getValue();
-            const processuser = oView.byId("inputUtilisateur").getValue();
+            const processuser = oView.byId("inputUser").getValue();
             const oDebut = oModel.getProperty("/debutTraitement");
             const begintimestamp = oDebut
                 ? `${oDebut.getFullYear()}${(oDebut.getMonth() + 1).toString().padStart(2, '0')}${oDebut.getDate().toString().padStart(2, '0')}${oDebut.getHours().toString().padStart(2, '0')}${oDebut.getMinutes().toString().padStart(2, '0')}${oDebut.getSeconds().toString().padStart(2, '0')}`
@@ -541,7 +560,7 @@ sap.ui.define([
                 codeTransac: ligne.codeTransac,
                 libelleTransac: ligne.libelleTransac,
                 montant: (ligne.signe === "-" ? "-" : "") + (parseFloat(ligne.montant).toFixed(2) || "0.00"),
-                utilisateur: oData.utilisateur,
+                user: oData.user,
                 debutTraitement: formatDateTime(oData.debutTraitement),
                 finTraitement: formatDateTime(oData.finTraitement)
             }));
@@ -556,7 +575,7 @@ sap.ui.define([
                 { label: "Code Transaction Financière", property: "codeTransac" },
                 { label: "Libellé Transaction financière", property: "libelleTransac" },
                 { label: "Montants", property: "montant" },
-                { label: "Utilisateur", property: "utilisateur" },
+                { label: "user", property: "user" },
                 { label: "Début du traitement", property: "debutTraitement" },
                 { label: "Fin du traitement", property: "finTraitement" }
             ];
